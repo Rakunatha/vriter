@@ -91,9 +91,7 @@ st.markdown("""
     Vrite
     <span class="vrite-badge">cloud</span>
   </p>
-  <p class="vrite-subtitle">
-    Generate style-matched talking-head videos from a script.
-  </p>
+
 </div>
 """, unsafe_allow_html=True)
 
