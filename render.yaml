@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: vrite
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: VRITE_DEVICE
+        value: cpu
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    healthCheckPath: /_stcore/health
+    autoDeploy: true

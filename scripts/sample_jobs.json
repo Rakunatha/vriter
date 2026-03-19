@@ -1,0 +1,12 @@
+[
+  {
+    "sample_video": "uploads/reference.mp4",
+    "script": "Hello and welcome. This is the first batch video.",
+    "output": "outputs/batch/video_001.mp4"
+  },
+  {
+    "sample_video": "uploads/reference.mp4",
+    "script": "This is the second video using the same reference.",
+    "output": "outputs/batch/video_002.mp4"
+  }
+]
