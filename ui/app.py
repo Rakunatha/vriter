@@ -1,7 +1,5 @@
 """
-Vrite - Streamlit Web UI
-Cloud-aware: uses gTTS on Render free tier,
-full Coqui XTTS-v2 when available.
+Vriter
 """
 from __future__ import annotations
 
@@ -79,16 +77,16 @@ def _has(pkg: str) -> bool:
         return False
 
 
-HAS_COQUI   = _has("TTS")
-HAS_WAV2LIP = (Path("Wav2Lip/inference.py").exists()
-               and Path("models/wav2lip_gan.pth").exists())
-VOICE_ENGINE  = ("Coqui XTTS-v2" if HAS_COQUI else "gTTS")
-LIPSYNC_ENGINE = ("Wav2Lip GAN" if HAS_WAV2LIP else "Audio-swap")
+HAS_COQUI    = _has("TTS")
+HAS_WAV2LIP  = (Path("Wav2Lip/inference.py").exists()
+                and Path("models/wav2lip_gan.pth").exists())
+VOICE_ENGINE   = "Coqui XTTS-v2" if HAS_COQUI else "gTTS"
+LIPSYNC_ENGINE = "Wav2Lip GAN" if HAS_WAV2LIP else "Audio-swap"
 
 st.markdown("""
 <div class="vrite-header">
   <p class="vrite-title">
-    Vrite
+    Vriter
     <span class="vrite-badge">cloud</span>
   </p>
 
@@ -106,9 +104,7 @@ with st.sidebar:
     st.markdown(f"**Voice:** {VOICE_ENGINE}")
     st.markdown(f"**Lip-sync:** {LIPSYNC_ENGINE}")
     st.divider()
-    st.caption(
-        "Files are temporary and available for download "
-        "during your session only.")
+    st.caption("Generated videos are kept in memory during your session.")
 
 col_left, col_right = st.columns([1, 1], gap="large")
 
@@ -147,7 +143,23 @@ with col_right:
         disabled=not ready,
         use_container_width=True)
 
+    if st.session_state.get("video_bytes"):
+        st.markdown("#### Preview")
+        st.video(st.session_state["video_bytes"])
+        st.download_button(
+            label="Download MP4",
+            data=st.session_state["video_bytes"],
+            file_name=f"vrite_{st.session_state.get('video_ts', 'output')}.mp4",
+            mime="video/mp4",
+            use_container_width=True)
+        if st.button("Clear and generate a new video",
+                     use_container_width=True):
+            del st.session_state["video_bytes"]
+            st.rerun()
+
     if generate_btn and ready:
+        st.session_state.pop("video_bytes", None)
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
 
@@ -175,7 +187,7 @@ with col_right:
                 tmp_dir=str(tmp / "tmp"))
 
             progress_bar = st.progress(0)
-            status_box = st.empty()
+            status_box   = st.empty()
 
             def on_progress(msg: str, pct: int) -> None:
                 progress_bar.progress(pct)
@@ -193,19 +205,22 @@ with col_right:
                     sample_audio=audio_path,
                     output_path=output_path)
                 elapsed = time.perf_counter() - t_start
+
+                video_bytes = Path(result.output_path).read_bytes()
+
+                st.session_state["video_bytes"] = video_bytes
+                st.session_state["video_ts"]    = int(time.time())
+
                 progress_bar.progress(100)
-                status_box.success("Done! Your video is ready.")
+                status_box.success("Done! Your video is ready to download.")
 
                 from vrite.utils import format_duration
                 c1, c2, c3 = st.columns(3)
-                c1.metric("Length",
-                          f"{result.duration_seconds:.0f}s")
-                c2.metric("Processed in",
-                          format_duration(elapsed))
+                c1.metric("Length", f"{result.duration_seconds:.0f}s")
+                c2.metric("Processed in", format_duration(elapsed))
                 c3.metric("Device", "CPU")
 
                 st.markdown("#### Preview")
-                video_bytes = Path(result.output_path).read_bytes()
                 st.video(video_bytes)
                 st.download_button(
                     label="Download MP4",
@@ -223,10 +238,10 @@ with col_right:
 st.divider()
 cols = st.columns(4)
 for col, (label, tool) in zip(cols, [
-    ("Voice", VOICE_ENGINE),
+    ("Voice",    VOICE_ENGINE),
     ("Lip-sync", LIPSYNC_ENGINE),
-    ("Video", "ffmpeg + OpenCV"),
-    ("UI", "Streamlit"),
+    ("Video",    "ffmpeg + OpenCV"),
+    ("UI",       "Streamlit"),
 ]):
     col.markdown(
         f"<div style='text-align:center;font-size:0.8rem;"
