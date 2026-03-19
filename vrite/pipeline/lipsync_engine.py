@@ -42,9 +42,9 @@ class LipSyncEngine:
             log.info("Strategy: Wav2Lip GAN")
             return self._wav2lip(source_video, norm, out_path)
 
-        if (SADTALKER_DIR / "inference.py").exists():
-            log.info("Strategy: SadTalker")
-            return self._sadtalker(source_video, norm, out_path)
+       if (SADTALKER_DIR / "inference.py").exists() and self._sadtalker_ready():
+    log.info("Strategy: SadTalker")
+    return self._sadtalker(source_video, norm, out_path)
 
         log.warning("No lip-sync model - using audio-swap fallback")
         return self._audio_swap(source_video, norm, out_path)
@@ -95,6 +95,11 @@ class LipSyncEngine:
             raise RuntimeError("SadTalker produced no output")
         shutil.move(str(generated[-1]), out_path)
         return out_path
+
+    def _sadtalker_ready(self) -> bool:
+    """Check SadTalker has its required checkpoint before trying to run."""
+    required = Path(self.cfg.sadtalker_checkpoint_dir) / "SadTalker_V0.0.2_256.safetensors"
+    return required.exists()
 
     def _audio_swap(self, video: str, audio: str,
                     out_path: str) -> str:
