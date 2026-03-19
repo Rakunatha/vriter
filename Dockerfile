@@ -1,9 +1,16 @@
 FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg git curl \
-    libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev \
-    libgomp1 espeak-ng \
+    ffmpeg \
+    git \
+    curl \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+    libgl1 \
+    espeak-ng \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
